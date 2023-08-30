@@ -1,8 +1,15 @@
 import { rmSync } from 'node:fs'
+import process from 'node:process'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
-import electron from 'vite-plugin-electron'
 import renderer from 'vite-plugin-electron-renderer'
+
+// eslint-disable-next-line import/default
+import electron from 'vite-plugin-electron'
+
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import pkg from './package.json'
 
 // https://vitejs.dev/config/
@@ -21,11 +28,12 @@ export default defineConfig(({ command }) => {
           // Main-Process entry file of the Electron App.
           entry: 'electron/main/index.ts',
           onstart(options) {
-            if (process.env.VSCODE_DEBUG) {
+            if (process.env.VSCODE_DEBUG)
+              // eslint-disable-next-line no-console
               console.log(/* For `.vscode/.debug.script.mjs` */'[startup] Electron App')
-            } else {
+
+            else
               options.startup()
-            }
           },
           vite: {
             build: {
@@ -41,7 +49,7 @@ export default defineConfig(({ command }) => {
         {
           entry: 'electron/preload/index.ts',
           onstart(options) {
-            // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete, 
+            // Notify the Renderer-Process to reload the page when the Preload-Scripts build is complete,
             // instead of restarting the entire Electron App.
             options.reload()
           },
@@ -55,10 +63,18 @@ export default defineConfig(({ command }) => {
               },
             },
           },
-        }
+        },
       ]),
       // Use Node.js API in the Renderer-process
       renderer(),
+      AutoImport({
+        resolvers: [ElementPlusResolver()],
+        dts: 'types/auto-imports.d.ts',
+      }),
+      Components({
+        resolvers: [ElementPlusResolver()],
+        dts: 'types/components.d.ts',
+      }),
     ],
     server: process.env.VSCODE_DEBUG && (() => {
       const url = new URL(pkg.debug.env.VITE_DEV_SERVER_URL)

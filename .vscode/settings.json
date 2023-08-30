@@ -1,4 +1,12 @@
 {
+  "prettier.enable": false,
+  "editor.formatOnSave": false,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": true
+  },
+  "editor.quickSuggestions": {
+    "strings": true
+  },
   "typescript.tsdk": "node_modules/typescript/lib",
   "typescript.tsc.autoDetect": "off",
   "json.schemas": [

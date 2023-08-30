@@ -1,6 +1,10 @@
-import { app, BrowserWindow, shell, ipcMain } from 'electron'
+/* eslint-disable n/prefer-global/process */
 import { release } from 'node:os'
 import { join } from 'node:path'
+import type { Tray } from 'electron'
+import { BrowserWindow, Menu, app, ipcMain, nativeImage, shell } from 'electron'
+import { Tray as CustomTray } from './tray'
+import Remind from './remind'
 
 // The built directory structure
 //
@@ -19,10 +23,12 @@ process.env.VITE_PUBLIC = process.env.VITE_DEV_SERVER_URL
   : process.env.DIST
 
 // Disable GPU Acceleration for Windows 7
-if (release().startsWith('6.1')) app.disableHardwareAcceleration()
+if (release().startsWith('6.1'))
+  app.disableHardwareAcceleration()
 
 // Set application name for Windows 10+ notifications
-if (process.platform === 'win32') app.setAppUserModelId(app.getName())
+if (process.platform === 'win32')
+  app.setAppUserModelId(app.getName())
 
 if (!app.requestSingleInstanceLock()) {
   app.quit()
@@ -42,8 +48,10 @@ const indexHtml = join(process.env.DIST, 'index.html')
 
 async function createWindow() {
   win = new BrowserWindow({
-    title: 'Main window',
-    icon: join(process.env.VITE_PUBLIC, 'favicon.ico'),
+    title: '摸fish',
+    icon: join(process.env.VITE_PUBLIC, 'logo.png'),
+    width: 302,
+    height: 170,
     webPreferences: {
       preload,
       // Warning: Enable nodeIntegration and disable contextIsolation is not secure in production
@@ -57,10 +65,29 @@ async function createWindow() {
   if (process.env.VITE_DEV_SERVER_URL) { // electron-vite-vue#298
     win.loadURL(url)
     // Open devTool if the app is not packaged
-    win.webContents.openDevTools()
-  } else {
+    // win.webContents.openDevTools()
+  }
+  else {
     win.loadFile(indexHtml)
   }
+
+  // 设置托盘，macOS 在电脑上面的顶部菜单栏，Windows 在电脑右下角的任务栏
+  const customTray = new CustomTray(app, win).init()
+
+  // 设置托盘交互逻辑
+  customTray.on('click', () => {
+    if (win)
+      win.show()
+
+    else
+      createWindow()
+  })
+
+  win.on('minimize', () => win.hide())
+
+  // 提醒
+  // eslint-disable-next-line no-new
+  new Remind()
 
   // Test actively push message to the Electron-Renderer
   win.webContents.on('did-finish-load', () => {
@@ -69,7 +96,8 @@ async function createWindow() {
 
   // Make all links open with the browser, not with the application
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (url.startsWith('https:')) shell.openExternal(url)
+    if (url.startsWith('https:'))
+      shell.openExternal(url)
     return { action: 'deny' }
   })
   // win.webContents.on('will-navigate', (event, url) => { }) #344
@@ -79,24 +107,26 @@ app.whenReady().then(createWindow)
 
 app.on('window-all-closed', () => {
   win = null
-  if (process.platform !== 'darwin') app.quit()
+  if (process.platform !== 'darwin')
+    app.quit()
 })
 
 app.on('second-instance', () => {
   if (win) {
     // Focus on the main window if the user tried to open another
-    if (win.isMinimized()) win.restore()
+    if (win.isMinimized())
+      win.restore()
     win.focus()
   }
 })
 
 app.on('activate', () => {
   const allWindows = BrowserWindow.getAllWindows()
-  if (allWindows.length) {
+  if (allWindows.length)
     allWindows[0].focus()
-  } else {
+
+  else
     createWindow()
-  }
 })
 
 // New window example arg: new windows url
@@ -109,9 +139,9 @@ ipcMain.handle('open-win', (_, arg) => {
     },
   })
 
-  if (process.env.VITE_DEV_SERVER_URL) {
+  if (process.env.VITE_DEV_SERVER_URL)
     childWindow.loadURL(`${url}#${arg}`)
-  } else {
+
+  else
     childWindow.loadFile(indexHtml, { hash: arg })
-  }
 })

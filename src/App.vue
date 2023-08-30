@@ -1,49 +1,68 @@
 <script setup lang="ts">
-import HelloWorld from './components/HelloWorld.vue'
+import { ref } from 'vue'
+import { ipcRenderer } from 'electron'
+
+const interval = ref(0)
+const sentence = ref('')
+
+getSentence()
+
+function start() {
+  ipcRenderer.send('set-timer', interval.value)
+}
+
+function stop() {
+  ipcRenderer.send('stop-timer')
+}
+
+function getSentence() {
+  fetch('https://v1.hitokoto.cn?max_length=20')
+    .then(response => response.json())
+    .then((data) => {
+      sentence.value = data.hitokoto
+    })
+    .catch(console.error)
+}
 </script>
 
 <template>
-  <div>
-    <a href="https://www.electronjs.org/" target="_blank">
-      <img src="./assets/electron.svg" class="logo electron" alt="Electron logo" />
-    </a>
-    <a href="https://vitejs.dev/" target="_blank">
-      <img src="./assets/vite.svg" class="logo" alt="Vite logo" />
-    </a>
-    <a href="https://vuejs.org/" target="_blank">
-      <img src="./assets/vue.svg" class="logo vue" alt="Vue logo" />
-    </a>
-  </div>
-  <HelloWorld msg="Electron + Vite + Vue" />
-  <div class="flex-center">
-    Place static files into the <code>/public</code> folder
-    <img style="width: 2.4em; margin-left: .4em;" src="/logo.svg" alt="Logo">
+  <el-alert class="remind-tips" size="small" title="默认 1 小时提醒一次" type="info" show-icon :closable="false" />
+
+  <el-space wrap>
+    <el-input-number
+      v-model="interval"
+      :precision="1"
+      :step="0.1"
+      :max="2"
+      :controls="false"
+    />
+
+    <el-button-group>
+      <el-button type="primary" @click="start">
+        开始
+      </el-button>
+      <el-button type="danger" @click="stop">
+        清除
+      </el-button>
+    </el-button-group>
+  </el-space>
+
+  <div class="bottom">
+    {{ sentence }}
   </div>
 </template>
 
 <style>
-.flex-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.remind-tips {
+  height: 30px;
+  margin-bottom: 20px;
 }
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-
-.logo.electron:hover {
-  filter: drop-shadow(0 0 2em #9FEAF9);
-}
-
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
+.bottom {
+  margin-top: 20px;
+  line-height: 24px;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: center;
+  color: rgba(60, 60, 60, .7);
 }
 </style>

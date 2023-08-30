@@ -3,6 +3,7 @@
  */
 {
   "$schema": "https://raw.githubusercontent.com/electron-userland/electron-builder/master/packages/app-builder-lib/scheme.json",
+  "productName": "摸fish",
   "appId": "YourAppID",
   "asar": true,
   "directories": {
@@ -12,8 +13,9 @@
     "dist-electron",
     "dist"
   ],
+  "icon": "public/logo@512.png",
   "mac": {
-    "artifactName": "${productName}_${version}.${ext}",
+    "artifactName": "摸fish_${version}.${ext}",
     "target": [
       "dmg"
     ]
@@ -27,7 +29,7 @@
         ]
       }
     ],
-    "artifactName": "${productName}_${version}.${ext}"
+    "artifactName": "摸fish_${version}.${ext}"
   },
   "nsis": {
     "oneClick": false,
